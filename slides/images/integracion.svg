@@ -1,0 +1,73 @@
+<svg viewBox="0 0 1080 340" xmlns="http://www.w3.org/2000/svg" role="img" font-family="'IBM Plex Mono','Courier New',monospace">
+  <title>Cómo se integra: R orquesta los motores</title>
+  <desc>Los WAV que pasan QC entran en R (targets), que coordina dos motores —índices acústicos en R y BirdNET como proceso externo de Python— cuyas salidas se unen en la tabla; después, warbleR toma la tabla y los WAV para el análisis de señal.</desc>
+  <rect x="0" y="0" width="1080" height="340" rx="14" fill="#0B0E13"/>
+  <defs>
+    <marker id="ia" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7C8896"/></marker>
+  </defs>
+  <g fill="#5FB89A" font-size="12" letter-spacing="2">
+    <text x="34" y="30">ENTRADA</text>
+    <text x="232" y="30">R ORQUESTA</text>
+    <text x="470" y="30">MOTORES</text>
+    <text x="712" y="30">TABLA</text>
+    <text x="910" y="30">DESPUÉS</text>
+  </g>
+
+  <!-- ENTRADA: WAV + icono grabador (AudioMoth) -->
+  <rect x="28" y="120" width="150" height="86" rx="10" fill="#12161D" stroke="#7C8896"/>
+  <rect x="44" y="150" width="34" height="26" rx="3" fill="none" stroke="#5FB89A" stroke-width="2"/>
+  <circle cx="55" cy="163" r="6" fill="none" stroke="#E8A55C" stroke-width="2"/><circle cx="55" cy="163" r="2" fill="#E8A55C"/>
+  <line x1="70" y1="156" x2="76" y2="156" stroke="#7C8896" stroke-width="1.5"/><line x1="70" y1="163" x2="76" y2="163" stroke="#7C8896" stroke-width="1.5"/><line x1="70" y1="170" x2="74" y2="170" stroke="#7C8896" stroke-width="1.5"/>
+  <text x="92" y="160" font-size="13" fill="#ECEFF3">WAV</text>
+  <text x="92" y="177" font-size="11.5" fill="#5FB89A">QC ✓</text>
+  <text x="44" y="198" font-size="10.5" fill="#7C8896">AudioMoth · una carpeta/grabador</text>
+
+  <!-- R · targets (hub) -->
+  <rect x="210" y="110" width="170" height="108" rx="12" fill="#211c14" stroke="#E8A55C" stroke-width="1.6"/>
+  <text x="295" y="155" text-anchor="middle" font-size="22" fill="#E8A55C">R · targets</text>
+  <text x="295" y="178" text-anchor="middle" font-size="12.5" fill="#7C8896">orquesta el flujo</text>
+  <text x="295" y="198" text-anchor="middle" font-size="11" fill="#7C8896">(el pegamento)</text>
+
+  <!-- arrows in -->
+  <line x1="178" y1="163" x2="206" y2="163" stroke="#7C8896" stroke-width="1.6" marker-end="url(#ia)"/>
+
+  <!-- MOTOR 1: Índices (R) -->
+  <rect x="410" y="78" width="220" height="60" rx="9" fill="#12161D" stroke="#5FB89A"/>
+  <g stroke="#5FB89A" stroke-width="2.4" stroke-linecap="round"><line x1="430" y1="108" x2="430" y2="108"/><line x1="436" y1="100" x2="436" y2="116"/><line x1="442" y1="94" x2="442" y2="122"/><line x1="448" y1="104" x2="448" y2="112"/><line x1="454" y1="98" x2="454" y2="118"/></g>
+  <text x="468" y="104" font-size="14" fill="#5FB89A">Índices acústicos</text>
+  <text x="468" y="122" font-size="11" fill="#7C8896">R · seewave / soundecology</text>
+
+  <!-- MOTOR 2: BirdNET (Python, externo) + icono pájaro -->
+  <rect x="410" y="190" width="220" height="60" rx="9" fill="#12161D" stroke="#E8A55C"/>
+  <path d="M428 224 C433 216, 442 215, 447 217 L454 212 L450 219 C452 223, 449 228, 442 229 C435 230, 430 228, 428 224 Z" fill="#E8A55C"/>
+  <circle cx="449" cy="217" r="1.2" fill="#0B0E13"/>
+  <path d="M458 211 A8 8 0 0 1 458 229" fill="none" stroke="#5FB89A" stroke-width="1.6"/>
+  <text x="470" y="216" font-size="14" fill="#E8A55C">BirdNET</text>
+  <text x="470" y="234" font-size="11" fill="#7C8896">Python · proceso EXTERNO</text>
+
+  <!-- R -> motores -->
+  <path d="M380,150 C396,150 396,108 408,108" stroke="#7C8896" stroke-width="1.6" fill="none" marker-end="url(#ia)"/>
+  <path d="M380,178 C396,178 396,220 408,220" stroke="#7C8896" stroke-width="1.6" fill="none" marker-end="url(#ia)"/>
+
+  <!-- TABLA -->
+  <rect x="660" y="118" width="150" height="92" rx="11" fill="#211c14" stroke="#E8A55C"/>
+  <text x="735" y="158" text-anchor="middle" font-size="15" fill="#ECEFF3">tabla</text>
+  <text x="735" y="178" text-anchor="middle" font-size="12.5" fill="#7C8896">consolidada</text>
+
+  <!-- motores -> tabla -->
+  <path d="M630,108 C648,108 648,150 658,150" stroke="#7C8896" stroke-width="1.6" fill="none" marker-end="url(#ia)"/>
+  <path d="M630,220 C648,220 648,180 658,180" stroke="#7C8896" stroke-width="1.6" fill="none" marker-end="url(#ia)"/>
+
+  <!-- warbleR (después) + icono onda -->
+  <rect x="850" y="124" width="210" height="80" rx="10" fill="#12161D" stroke="#5FB89A"/>
+  <g stroke="#5FB89A" stroke-width="2.4" stroke-linecap="round"><line x1="872" y1="164" x2="872" y2="164"/><line x1="878" y1="156" x2="878" y2="172"/><line x1="884" y1="148" x2="884" y2="180"/><line x1="890" y1="158" x2="890" y2="170"/><line x1="896" y1="152" x2="896" y2="176"/></g>
+  <text x="912" y="158" font-size="15" fill="#5FB89A">warbleR</text>
+  <text x="912" y="176" font-size="11" fill="#7C8896">R · análisis de señal</text>
+  <text x="864" y="196" font-size="10.5" fill="#7C8896">selección · espectrogramas por lotes</text>
+
+  <line x1="810" y1="164" x2="848" y2="164" stroke="#7C8896" stroke-width="1.6" marker-end="url(#ia)"/>
+
+  <!-- mensaje clave -->
+  <text x="34" y="318" font-size="13" fill="#E8A55C">R no hace la detección:</text>
+  <text x="232" y="318" font-size="13" fill="#7C8896">coordina motores especializados (R lanza BirdNET y recoge sus CSV) y une sus salidas en una sola tabla.</text>
+</svg>

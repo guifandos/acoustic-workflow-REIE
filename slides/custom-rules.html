@@ -1,0 +1,144 @@
+<style>
+/* =====================================================================
+   Reglas de los componentes del tema "Campo de sonido" (CSS plano).
+   Van aquí (no en custom.scss) porque esta versión de Quarto descarta la
+   sección scss:rules al fallar su paso "css vars block". Los colores son
+   los del custom.scss: bg #0B0E13 · panel #12161D · ink #ECEFF3 ·
+   muted #7C8896 · line #232A33 · amber #E8A55C · teal #5FB89A · coral #E26D6D.
+   ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+.reveal { font-family: "Inter", system-ui, sans-serif; font-weight: 400; }
+.reveal .slides { text-align: left; }
+
+.reveal h1 { font-size: 1.9em; line-height: 1.04; letter-spacing: -.5px; }
+.reveal h2 { font-size: 1.3em; font-weight: 600; letter-spacing: -.3px; margin-bottom: .5em; }
+.reveal h3 { font-family: "Inter", system-ui, sans-serif; font-weight: 600; color: #ECEFF3; font-size: 1em; }
+
+.reveal p, .reveal li { line-height: 1.4; }
+.reveal strong { color: #E8A55C; font-weight: 600; }
+.reveal a { text-decoration: none; border-bottom: 1px solid rgba(232,165,92,.45); }
+
+.kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .52em; font-weight: 500; letter-spacing: 2px;
+  text-transform: uppercase; color: #E8A55C; margin: 0 0 .2em;
+}
+.kicker::before { content: "— "; color: #7C8896; }
+
+.rule { height: 2px; width: 64px; background: #E8A55C; margin: .3em 0 .7em; border: 0; }
+
+.lead {
+  font-family: "Fraunces", Georgia, serif; font-weight: 500;
+  font-size: 1.5em; line-height: 1.18; letter-spacing: -.3px;
+}
+.lead .hl { color: #E8A55C; }
+.muted { color: #7C8896; }
+.small { font-size: .7em; }
+
+#title-slide { text-align: left; }
+.reveal #title-slide .title { font-size: 2.7em; line-height: .98; color: #ECEFF3; font-weight: 600; }
+.reveal #title-slide .subtitle {
+  color: #E8A55C; font-family: "IBM Plex Mono", monospace;
+  font-size: .8em; letter-spacing: .5px; font-weight: 500; margin-top: .8em;
+}
+.reveal #title-slide .author, .reveal #title-slide .date { color: #7C8896; font-size: .65em; }
+
+.reveal .slide.section-divider h1, .reveal .slide.section-divider h2 {
+  font-size: 2.4em; font-weight: 600; border: none;
+}
+.section-num {
+  font-family: "IBM Plex Mono", monospace; color: #E8A55C;
+  font-size: .6em; letter-spacing: 3px; display: block; margin-bottom: .1em;
+}
+
+.pipeline {
+  display: flex; align-items: center; gap: 0; margin: 0 0 1em;
+  font-family: "IBM Plex Mono", monospace; font-size: .5em;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.pipeline .step { color: #7C8896; padding: 0 .9em; position: relative; }
+.pipeline .step + .step::before {
+  content: ""; position: absolute; left: 0; top: 50%;
+  width: 1px; height: 10px; background: #232A33; transform: translateY(-50%);
+}
+.pipeline .step.done   { color: #5FB89A; }
+.pipeline .step.active { color: #E8A55C; font-weight: 500; }
+.pipeline .step.active::after { content: ""; display: block; height: 2px; background: #E8A55C; margin-top: 3px; }
+
+.panel { background: #12161D; border: 1px solid #232A33; border-radius: 10px; padding: .7em .95em; }
+.panel + .panel { margin-top: .4em; }
+
+.tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .42em; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; padding: .25em .55em; border-radius: 5px;
+  vertical-align: middle; border: 1px solid;
+}
+.tag.base { color: #5FB89A; border-color: rgba(95,184,154,.5); }
+.tag.adv  { color: #E8A55C; border-color: rgba(232,165,92,.5); }
+
+.dual { display: grid; grid-template-columns: 1fr 1fr; gap: .6em; margin-top: .5em; }
+.dual .b, .dual .a { padding: .6em .8em; border-radius: 10px; font-size: .8em; }
+.dual .b { background: rgba(95,184,154,.08); border-left: 3px solid #5FB89A; }
+.dual .a { background: rgba(232,165,92,.08); border-left: 3px solid #E8A55C; }
+.dual .lbl {
+  font-family: "IBM Plex Mono", monospace; font-size: .7em; letter-spacing: 1px;
+  text-transform: uppercase; display: block; margin-bottom: .2em;
+}
+.dual .b .lbl { color: #5FB89A; } .dual .a .lbl { color: #E8A55C; }
+
+.live { border-left: 3px solid #5FB89A; padding: .3em 0 .3em 1em; margin: .4em 0; }
+.live .lbl {
+  font-family: "IBM Plex Mono", monospace; font-size: .55em; letter-spacing: 2px;
+  text-transform: uppercase; color: #5FB89A;
+}
+
+.slot {
+  border: 1px solid #232A33; border-radius: 10px; padding: 1.1em;
+  color: #7C8896; font-family: "IBM Plex Mono", monospace; font-size: .6em;
+  letter-spacing: 1px; text-align: center; background: #12161D;
+}
+.slot b { color: #E8A55C; }
+
+.danger { color: #E26D6D; }
+.ok { color: #5FB89A; }
+
+.reveal pre { box-shadow: none; }
+.reveal pre code { font-family: "IBM Plex Mono", monospace; border-radius: 8px; border: 1px solid #232A33; }
+
+.reveal .footer { color: #7C8896; font-size: .42em; font-family: "IBM Plex Mono", monospace; letter-spacing: .5px; }
+.reveal .slide-number { color: #7C8896; font-family: "IBM Plex Mono", monospace; }
+
+/* Hilo narrativo: el viaje de UN archivo */
+.trace {
+  font-family: "IBM Plex Mono", monospace; font-size: .5em; letter-spacing: .3px;
+  color: #7C8896; margin: .6em 0 0; padding-top: .5em; border-top: 1px solid #232A33;
+}
+.trace .f { color: #E8A55C; }
+.trace .arrow { color: #232A33; padding: 0 .4em; }
+.trace .new { color: #5FB89A; }
+
+/* Chuleta / tarjeta de referencia */
+.cheat { display: grid; grid-template-columns: auto 1fr; gap: .35em .9em; font-size: .62em; margin-top: .4em; }
+.cheat .st {
+  font-family: "IBM Plex Mono", monospace; color: #E8A55C; text-transform: uppercase;
+  letter-spacing: 1px; white-space: nowrap; font-size: .85em; padding-top: .15em;
+}
+.cheat .do code { background: transparent; color: #ECEFF3; padding: 0; border: 0; font-size: .95em; }
+.cheat .row-line { grid-column: 1 / -1; height: 1px; background: #232A33; }
+
+/* Antes / después */
+.ba { display: grid; grid-template-columns: 1fr 1fr; gap: .8em; margin-top: .4em; }
+.ba .col { border-radius: 10px; padding: .6em .8em; font-family: "IBM Plex Mono", monospace; font-size: .55em; line-height: 1.5; }
+.ba .bad  { background: rgba(226,109,109,.07); border: 1px solid rgba(226,109,109,.3); color: #E26D6D; }
+.ba .good { background: rgba(95,184,154,.07);  border: 1px solid rgba(95,184,154,.3);  color: #5FB89A; }
+.ba .h { display: block; font-size: .85em; letter-spacing: 1px; text-transform: uppercase; margin-bottom: .3em; opacity: .8; }
+
+/* Marca discreta de "diapo de referencia / para llevar" */
+.takeaway::after {
+  content: "REFERENCIA"; position: absolute; top: 12px; right: 18px;
+  font-family: "IBM Plex Mono", monospace; font-size: .32em; letter-spacing: 2px;
+  color: #7C8896; border: 1px solid #232A33; border-radius: 4px; padding: .2em .5em;
+}
+</style>

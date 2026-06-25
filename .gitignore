@@ -1,0 +1,41 @@
+# Datos crudos y procesados: no van a git (pesados y/o sensibles)
+data_raw/*
+!data_raw/README.md
+# Excepción: los datos de EJEMPLO de la práctica SÍ se versionan (para clone-and-run)
+!data_raw/AM01/
+!data_raw/AM01/**
+!data_raw/AM02/
+!data_raw/AM02/**
+data/*
+!data/sites.csv
+output/*
+!output/.gitkeep
+# targets
+_targets/
+# renv
+renv/library/
+.Rproj.user
+.Rhistory
+
+# --- Material interno del ponente (NO se sube al repo) ---
+_prompt_inicial.md
+RESUMEN_PONENTE.md
+GUION_ACTIVIDAD.md
+docs/guion.md
+
+# --- Otros documentos: solo se publica la guía del alumno ---
+CHULETA_ALUMNO.md
+CHULETA_ALUMNO.docx
+
+# --- Dashboard de apertura (por ahora, fuera del repo) ---
+dashboard/
+
+# --- Temporales de Office (archivos de bloqueo ~$) y del sistema ---
+~$*
+Thumbs.db
+.DS_Store
+
+# --- Artefactos generados (no versionar) ---
+entrega_alumnos_acustica.zip
+_quarto_internal_scss_error.scss
+slides/slides_files/
