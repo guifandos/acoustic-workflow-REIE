@@ -8,6 +8,7 @@ data_raw/*
 !data_raw/AM02/**
 data/*
 !data/sites.csv
+!data/sites_duplicate.csv
 output/*
 !output/.gitkeep
 # targets

@@ -244,6 +244,63 @@ análisis.
 *Restauración.* Devuélvase `tol_frac = 0.05`, guárdese y ejecútese
 `targets::tar_make()`; el resultado debe volver a `PASAN QC: 5 / 6`.
 
+## Ejercicio 4. Un join que infla filas silenciosamente
+
+La unión de la tabla de resultados con el diseño de muestreo es el punto donde
+con más frecuencia se introducen errores difíciles de detectar. Si la tabla de
+emplazamientos contiene dos filas para el mismo grabador —por ejemplo, por una
+doble clasificación de hábitat o una fila duplicada accidental—, cada grabación de
+ese grabador se multiplica en la tabla final sin ningún mensaje de error explícito
+de R. El flujo incluye un guardarraíl que detecta este caso concreto.
+
+**Procedimiento.**
+
+1. Ábrase el archivo `_targets.R` y localícese la línea:
+
+```r
+tar_target(sites_file, "data/sites.csv", format = "file"),
+```
+
+2. Sustitúyase `sites.csv` por `sites_duplicate.csv`:
+
+```r
+tar_target(sites_file, "data/sites_duplicate.csv", format = "file"),
+```
+
+3. Guárdese el archivo y ejecútese `targets::tar_make()`.
+
+**Resultados esperados.** En la consola aparecen dos avisos. El primero, de
+`dplyr`, indica que se ha detectado una relación muchos a muchos entre las tablas
+(`many-to-many relationship`). El segundo, del propio flujo, dice:
+
+```
+El join cambió el nº de filas (5 -> 7). Revisa claves duplicadas en 'sites' o 'meta'.
+```
+
+La tabla resultante tiene siete filas en lugar de cinco: las dos grabaciones del
+grabador AM02 aparecen duplicadas, cada una con un hábitat distinto (`matorral` y
+`pastizal`). El error es difícil de detectar a simple vista porque los índices
+acústicos y las fechas son correctos; solo el número de filas delata el problema.
+
+Para confirmar, examínese la tabla:
+
+```r
+tabla <- read.csv("output/tabla_analisis.csv")
+View(tabla)
+nrow(tabla)   # debe devolver 7, no 5
+```
+
+**Discusión.** Este tipo de error es habitual cuando el diseño de muestreo se
+construye a partir de varias fuentes o cuando dos personas rellenan la misma
+hoja por separado. La multiplicación de filas infla el tamaño aparente del
+conjunto de datos y, dependiendo del análisis posterior, puede sesgar los
+resultados sin producir ningún error explícito. El guardarraíl de `consolidate()`
+detiene el problema antes de que llegue al análisis; la solución es identificar
+y eliminar la fila duplicada en `data/sites_duplicate.csv`.
+
+*Restauración.* Devuélvase `"data/sites.csv"`, guárdese y ejecútese
+`targets::tar_make()`; la tabla debe volver a cinco filas.
+
 # Resolución de problemas frecuentes
 
 El Cuadro 2 recoge las incidencias más habituales y su solución.
@@ -257,6 +314,7 @@ El Cuadro 2 recoge las incidencias más habituales y su solución.
 | El ejercicio 2 no produce avisos | El archivo no se guardó, o no se reejecutó el flujo | Guardar y ejecutar `targets::tar_invalidate(meta_raw); targets::tar_make()` |
 | Aviso `Instala 'sonicscrewdriver'…` | Paquete opcional ausente | Comportamiento normal; el flujo finaliza correctamente |
 | Fechas con valor `NA` | Zona horaria mal escrita | Emplear nombres válidos de la base IANA; consultar `OlsonNames()` |
+| La tabla tiene más filas de las esperadas | Clave duplicada en `sites.csv` | Identificar la fila duplicada con `sites[duplicated(sites$recorder_id), ]` y eliminarla |
 | Error de `callr` o «nombre de archivo demasiado largo» (Windows con OneDrive) | Ruta de usuario con caracteres especiales | Ejecutar `Sys.setenv(HOME = Sys.getenv("USERPROFILE"))` antes de `tar_make()` |
 
 # Recursos y para saber más
