@@ -1,340 +1,301 @@
 ---
 title: "Flujo de trabajo reproducible en R para ecoacústica"
-subtitle: "Guía de prácticas autocontenida — de la tarjeta SD a la tabla de análisis"
+subtitle: "Guía de prácticas — de la tarjeta SD a la tabla de análisis"
 author: "Guillermo Fandos · Universidad Complutense de Madrid"
 date: "Reunión REIE · 26 de junio de 2026"
 lang: es
 ---
 
-# Presentación y objetivos
+# Qué vamos a hacer hoy
 
-Esta guía conduce, paso a paso y sin dar nada por supuesto, la realización de una
-práctica de tratamiento de datos en ecoacústica con el lenguaje R. Está pensada
-para personas **sin experiencia previa en R**: se explica desde la instalación del
-programa hasta la ejecución completa del flujo de trabajo.
+Esta guía te lleva, paso a paso, por una práctica de procesamiento de datos en ecoacústica con R. Está pensada para gente **sin experiencia previa en R**, así que no damos nada por supuesto.
 
-El objetivo de la práctica es transformar unas grabaciones de audio, tal y como se
-descargan de la tarjeta de memoria de un grabador, en una **tabla de datos ordenada
-y lista para el análisis**, empleando un flujo de trabajo *reproducible*: cualquier
-persona que repita los mismos pasos obtiene exactamente el mismo resultado.
+El objetivo es transformar unas grabaciones de audio —tal y como salen de la tarjeta SD de un grabador de campo— en una **tabla de datos limpia y lista para el análisis**, usando un flujo de trabajo *reproducible*: cualquier persona que siga los mismos pasos obtiene exactamente el mismo resultado.
 
-Al finalizar, el estudiante será capaz de:
+Al final de la sesión serás capaz de:
 
-- Obtener los materiales de la práctica e instalar el entorno de trabajo (R y RStudio).
-- Ejecutar, mediante una única instrucción, un flujo que convierte grabaciones sin
-  procesar en una tabla depurada.
-- Reconocer las tres fuentes de error más frecuentes en estos proyectos: la
-  nomenclatura de los archivos, la validación de los metadatos y la unión de tablas.
-- Comprender el papel del paquete `targets` como capa de orquestación y garantía de
-  reproducibilidad.
+- Descargar los materiales e instalar el entorno de trabajo.
+- Ejecutar un flujo completo con una sola instrucción y entender lo que hace.
+- Detectar tres tipos de errores muy frecuentes en proyectos de ecoacústica: errores en los metadatos, en el control de calidad y en la unión de tablas.
+- Entender para qué sirve `targets` y por qué vale la pena usarlo.
 
-La sección 4 contiene tres ejercicios guiados de tipo *ejecutar y alterar*: primero
-se comprueba el funcionamiento correcto y, después, se introduce un error
-controlado para entender la función de cada componente.
+Sigue los apartados en orden. Las instrucciones de código que aparecen en `tipografía de máquina`, como `targets::tar_make()`, se escriben tal cual en R (o se copian y pegan).
 
-> **Cómo usar esta guía.** Realícense los apartados en orden. Las instrucciones que
-> aparecen en recuadros con tipografía de máquina de escribir, como
-> `targets::tar_make()`, deben escribirse (o copiarse y pegarse) en R tal cual.
+---
 
-# Obtención de los materiales
+# Descarga de los materiales
 
-Los materiales de la práctica están alojados en un repositorio público de GitHub:
+Los materiales de la práctica están en GitHub:
 
 <https://github.com/guifandos/acoustic-workflow-REIE>
 
-Existen dos formas de descargarlos. Si no se ha trabajado nunca con GitHub,
-utilícese la **Opción A**.
+**Si no has usado GitHub antes, descarga el ZIP:**
 
-## Opción A — Descarga directa en formato ZIP (recomendada)
+1. Abre esa dirección en el navegador.
+2. Pulsa el botón verde **«Code»** (parte superior derecha de la página).
+3. Elige **«Download ZIP»**.
+4. Descomprime el archivo. Se crea una carpeta llamada `acoustic-workflow-REIE-main`.
+5. Mueve esa carpeta a un sitio estable (por ejemplo, tus Documentos) y, si quieres, renómbrala a `acoustic-workflow-REIE`. Esta carpeta es el **directorio del proyecto**; necesitarás su ubicación más adelante.
 
-1. Ábrase la dirección anterior en un navegador.
-2. Púlsese el botón verde **«Code»**, situado en la parte superior derecha del
-   listado de archivos.
-3. En el menú desplegable, elíjase **«Download ZIP»**.
-4. Guárdese el archivo (por ejemplo, en la carpeta *Descargas*) y descomprímase. Se
-   creará una carpeta llamada **`acoustic-workflow-REIE-main`**.
-5. Por comodidad, muévase esa carpeta a una ubicación estable, como
-   *Documentos*, y —si se desea— renómbrese a `acoustic-workflow-REIE` (sin el sufijo
-   `-main`). Esta carpeta es el **directorio del proyecto**; su nombre y ubicación
-   se necesitarán más adelante.
-
-## Opción B — Clonado con Git
-
-Si el sistema dispone de Git, puede obtenerse el repositorio desde una terminal con:
+**Si tienes Git instalado**, puedes clonarlo directamente desde una terminal:
 
 ```bash
 git clone https://github.com/guifandos/acoustic-workflow-REIE.git
 ```
 
-Esta orden crea la carpeta `acoustic-workflow-REIE` con todos los materiales.
+---
 
 # Instalación del entorno
 
-La práctica requiere el programa R y, de forma recomendada, el entorno integrado
-RStudio. Ambos son gratuitos. Si ya están instalados, puede pasarse directamente al
-apartado 3.4 (instalación de los paquetes).
+Si ya tienes R (versión ≥ 4.2) y RStudio instalados, ve directamente al apartado **3.4 — Instalación de paquetes**.
 
-## Paso 1 — Instalación de R
+## Paso 1 — Instala R
 
-1. Ábrase la página oficial de descarga: <https://cran.r-project.org>.
-2. Selecciónese el sistema operativo correspondiente: **«Download R for Windows»**,
-   **«… for macOS»** o **«… for Linux»**.
-3. En Windows, púlsese **«base»** y, a continuación, el enlace de descarga del
-   instalador. En macOS, descárguese el archivo `.pkg` que corresponda al equipo.
-4. Ejecútese el instalador y acéptense las opciones por defecto.
+1. Ve a <https://cran.r-project.org> y selecciona tu sistema operativo.
+2. En **Windows**, pulsa «base» y descarga el instalador. En **macOS**, descarga el `.pkg` correspondiente a tu equipo (comprueba si tienes chip Apple Silicon o Intel).
+3. Ejecuta el instalador con las opciones por defecto.
 
-## Paso 2 — Instalación de RStudio
+## Paso 2 — Instala RStudio
 
-1. Ábrase <https://posit.co/download/rstudio-desktop/>.
-2. Descárguese **RStudio Desktop** (versión gratuita) para el sistema operativo
-   correspondiente.
-3. Ejecútese el instalador con las opciones por defecto.
+1. Ve a <https://posit.co/download/rstudio-desktop/>.
+2. Descarga **RStudio Desktop** (versión gratuita) para tu sistema operativo.
+3. Instala con las opciones por defecto.
 
-## Paso 3 — Primer arranque de RStudio
+## Paso 3 — Primer arranque
 
-Ábrase RStudio (no es necesario abrir R por separado; RStudio lo utiliza
-internamente). La ventana se divide en varios paneles; el más importante para esta
-práctica es la **Consola** (*Console*), normalmente situada a la izquierda, donde se
-escriben las instrucciones de R.
+Abre RStudio (no hace falta abrir R por separado; RStudio lo usa internamente). Verás varios paneles. El que más vas a usar hoy es la **Consola** (*Console*), donde escribes las instrucciones de R y ves los resultados.
 
-## Paso 4 — Instalación de los paquetes de R
+## Paso 4 — Instala los paquetes necesarios
 
-Un *paquete* es un conjunto de funciones adicionales. Cópiese la siguiente
-instrucción en la Consola de RStudio y púlsese Intro. La instalación tarda unos
-minutos y solo es necesario realizarla una vez:
+Los paquetes son extensiones de R con funciones adicionales. Copia lo siguiente en la Consola y pulsa Intro. Solo tienes que hacerlo una vez; puede tardar unos minutos:
 
 ```r
 install.packages(c("targets", "tarchetypes", "tuneR", "seewave",
                    "data.table", "lubridate", "dplyr", "stringr"))
 ```
 
-La función de cada grupo de paquetes se resume en el Cuadro 1.
-
-**Cuadro 1.** Paquetes requeridos y su función.
-
-| Paquete | Función |
+| Paquete | Para qué sirve en esta práctica |
 |---|---|
-| `targets`, `tarchetypes` | Orquestación del flujo; recálculo selectivo de lo modificado |
-| `tuneR`, `seewave` | Lectura de archivos de audio y cálculo de índices acústicos |
-| `data.table`, `lubridate`, `dplyr`, `stringr` | Manejo de fechas, tablas y cadenas de texto |
+| `targets`, `tarchetypes` | Orquesta el flujo y recalcula solo lo que ha cambiado |
+| `tuneR`, `seewave` | Lee archivos WAV y calcula índices acústicos |
+| `dplyr`, `lubridate`, `stringr` | Manejo de tablas, fechas y texto |
 
-Los paquetes `sonicscrewdriver` y `soundecology` son opcionales y no resultan
-necesarios para esta práctica.
+---
 
 # Puesta en marcha
 
-**Primer paso: situar el directorio de trabajo.** R necesita saber en qué carpeta se
-encuentran los materiales. Este es el error más frecuente, por lo que conviene
-prestar atención.
+## Sitúa el directorio de trabajo
 
-En RStudio, utilícese el menú *Session → Set Working Directory → Choose Directory…*
-y selecciónese la carpeta del proyecto descargada en el apartado 2 (aquella que
-contiene el archivo `_targets.R`).
+R necesita saber en qué carpeta están los materiales. Este es el error más frecuente, así que préstale atención.
 
-Para comprobar que la ubicación es correcta, escríbase en la Consola:
+En RStudio, ve a *Session → Set Working Directory → Choose Directory…* y selecciona la carpeta del proyecto que descargaste (la que contiene el archivo `_targets.R`).
+
+Para comprobar que todo está en orden, escribe esto en la Consola:
 
 ```r
-getwd()        # su resultado debe terminar en la carpeta del proyecto
-list.files()   # debe mostrar _targets.R, R, data_raw, slides, etc.
+getwd()       # debe terminar en el nombre de la carpeta del proyecto
+list.files()  # debe mostrar _targets.R, R/, data_raw/, slides/, etc.
 ```
 
-Si `list.files()` muestra esos nombres, todo está en orden.
+Si `list.files()` muestra esos nombres, estás en el sitio correcto.
 
-**Segundo paso: ejecutar el flujo completo.** Escríbase en la Consola:
+## Abre el script de la práctica
 
-```r
-targets::tar_make()
-```
+En el panel *Files* de RStudio (normalmente abajo a la derecha), busca y haz clic en el archivo `practica.R`. Se abrirá en el editor. Este script tiene los cuatro ejercicios: irás ejecutando sus bloques línea a línea con **Ctrl+Enter**, o seleccionas un bloque entero y lo corres de una vez.
 
-Se observará la ejecución sucesiva de las etapas del flujo y un resumen del control
-de calidad. Al finalizar, la tabla de resultados se genera en el archivo
-`output/tabla_analisis.csv`. Dicha tabla contiene cinco filas —una por cada
-grabación que supera el control de calidad— con la fecha, el grabador, los índices
-acústicos y los datos del emplazamiento (coordenadas y hábitat) ya integrados. Esa
-tabla es el objetivo de la práctica.
+---
 
-# Procedimiento: ejercicios guiados
+# Ejercicios
 
-Tras cada ejercicio debe deshacerse la modificación introducida y volver a ejecutar
-`targets::tar_make()`, de modo que el siguiente ejercicio parta del estado original.
+Hay cuatro ejercicios. Después de cada uno, deshaz la modificación que hayas introducido y vuelve a ejecutar `targets::tar_make()`, para que el siguiente ejercicio parta del estado original.
 
-## Ejercicio 1. Ejecución del flujo y examen de la tabla resultante
+## Ejercicio 1 — Ejecutar el flujo y examinar la tabla
 
-**Procedimiento.**
+Ejecuta el bloque del **Ejercicio 1** en `practica.R`:
 
 ```r
 targets::tar_make()
 tabla <- read.csv("output/tabla_analisis.csv")
-View(tabla)        # en RStudio; alternativamente, head(tabla)
+View(tabla)
+nrow(tabla)
+names(tabla)
 ```
 
-**Resultados esperados.** El resumen del control de calidad indica `Archivos: 6`,
-`Duración anómala: 1` y `PASAN QC: 5 / 6`. La tabla contiene cinco filas, y no seis:
-la grabación `…062000_TRUNCADA.WAV` del grabador AM02, de tres segundos en lugar de
-los diez esperados, ha sido descartada. Cada fila integra tres ámbitos de
-información: la señal de audio (`rms`, `spectral_entropy`), los metadatos
-(`datetime`, `recorder_id`, `duration_s`) y el diseño de muestreo (`site`,
-`habitat`, `lat`, `lon`).
+**Lo que verás.** En la consola aparece el resumen del control de calidad:
 
-**Discusión.** Una única instrucción reproduce la totalidad del flujo, desde los
-archivos sin procesar hasta una tabla ordenada. El control de calidad ha excluido
-la grabación defectuosa sin intervención manual.
+```
+Archivos:  6   |   Duración anómala: 1   |   PASAN QC: 5 / 6
+```
 
-## Ejercicio 2. Alteración de la zona horaria y detección de discrepancias
+La tabla tiene **5 filas, no 6**. La grabación `20260501_062000_TRUNCADA.WAV` del grabador AM02 —que tiene 3 segundos en lugar de los 10 esperados— ha sido descartada automáticamente. Cada fila integra tres tipos de información:
 
-El flujo obtiene la fecha y la hora de cada grabación de dos fuentes independientes
-—el nombre del archivo (`20260501_060000.WAV`) y la cabecera interna del archivo
-WAV— y verifica su concordancia. En este ejercicio se provoca una discrepancia
-deliberada.
+- **Señal de audio:** `rms`, `spectral_entropy`
+- **Metadatos de la grabación:** `datetime`, `recorder_id`, `duration_s`
+- **Diseño de muestreo:** `site`, `habitat`, `lat`, `lon`
 
-**Procedimiento.**
+Una sola instrucción, desde los WAV crudos hasta una tabla con todo integrado.
 
-1. Ábrase el archivo `_targets.R` (desde el panel *Files* de RStudio) y localícese
-   la línea `recorder_tz <- "UTC"`.
-2. Sustitúyase su valor por una zona horaria distinta:
+**Para pensar:** ¿cómo sabrías, sin este flujo, que falta una grabación?
+
+---
+
+## Ejercicio 2 — Una zona horaria incorrecta
+
+El flujo extrae la fecha de cada grabación de dos fuentes: el **nombre del archivo** (`20260501_060000.WAV`) y la **cabecera interna del WAV**. Luego las compara. Si no coinciden, avisa. En este ejercicio lo vamos a romper a propósito.
+
+**Paso 1.** Abre `_targets.R` desde el panel *Files* de RStudio (haz clic en el archivo en la lista). Localiza la línea:
 
 ```r
-recorder_tz        <- "America/New_York"
+recorder_tz  <- "UTC"
 ```
 
-3. Guárdese el archivo (Ctrl+S) y ejecútese de nuevo `targets::tar_make()`.
+Cámbiala a:
 
-**Resultados esperados.** Se generan seis avisos del tipo
-`DISCREPANCIA nombre vs cabecera en 20260501_060000.WAV`, y el resumen indica
-`Discrepancia nombre/hdr: 6`. Las columnas `dt_name` y `dt_header` muestran
-aparentemente la misma hora ("06:00:00") y, sin embargo, el aviso se activa: las
-06:00 en la zona de Nueva York y las 06:00 en UTC son instantes distintos,
-separados por varias horas.
+```r
+recorder_tz  <- "America/New_York"
+```
 
-**Discusión.** Una zona horaria mal configurada altera todas las marcas temporales
-sin producir ningún error explícito. La validación cruzada entre el nombre y la
-cabecera permite detectar el problema de inmediato.
+**Paso 2.** Guarda el archivo con **Ctrl+S**. Si la barra de título de RStudio muestra un punto negro junto al nombre del archivo, significa que hay cambios sin guardar — asegúrate de guardar antes de ejecutar.
 
-*Restauración.* Devuélvase `recorder_tz <- "UTC"`, guárdese y ejecútese
-`targets::tar_make()`; la discrepancia debe volver a cero.
+Vuelve a `practica.R` y ejecuta el bloque del Ejercicio 2:
 
-## Ejercicio 3. Modificación de un umbral de control de calidad
+```r
+targets::tar_make()
+```
 
-Este ejercicio ilustra el recálculo selectivo de `targets`: al modificar un
-elemento, solo se recalcula lo que depende de él.
+**Lo que verás:**
 
-**Procedimiento.**
+```
+DISCREPANCIA nombre vs cabecera en 20260501_060000.WAV (revisa zona horaria o renombrado).
+Discrepancia nombre/hdr: 6
+```
 
-1. Ábrase el archivo `R/qc.R` y localícese la función `qc_flag()`, cuyo primer
-   parámetro define el umbral de tolerancia de duración (`tol_frac = 0.05`).
-2. Auméntese la tolerancia hasta el 75 %:
+Si miras las columnas `dt_name` y `dt_header`, las dos muestran "06:00:00", y aun así el aviso se activa. ¿Por qué? Las 6 de la mañana en Nueva York y las 6 de la mañana en UTC son momentos distintos, separados por horas. Una zona horaria incorrecta desplaza todas las marcas temporales sin producir ningún error en R. Solo la comparación cruzada entre las dos fuentes lo detecta.
+
+Si no ves ningún aviso, es probable que `targets` haya reutilizado la caché anterior. Ejecuta esto y vuelve a intentarlo:
+
+```r
+targets::tar_invalidate(meta_raw)
+targets::tar_make()
+```
+
+*Restauración:* vuelve a `recorder_tz <- "UTC"`, guarda y ejecuta `tar_make()`. Las discrepancias deben volver a cero.
+
+---
+
+## Ejercicio 3 — Cambiar el umbral de control de calidad
+
+Este ejercicio muestra la capacidad más útil de `targets` en el día a día: si modificas algo, **solo recalcula lo que depende de ese algo**. El resto se reutiliza de la caché sin ejecutarse de nuevo.
+
+**Paso 1.** Abre `R/qc.R` desde el panel *Files* (carpeta `R/` → archivo `qc.R`). Localiza la función `qc_flag()`. La primera línea es:
+
+```r
+qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
+```
+
+El parámetro `tol_frac = 0.05` significa que se descartan las grabaciones con una duración que se desvíe más del 5 % de lo esperado. Cámbialo a 0.75:
 
 ```r
 qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.75) {
 ```
 
-3. Guárdese y ejecútese `targets::tar_make()`.
+**Paso 2.** Guarda el archivo (Ctrl+S) y ejecuta el bloque del Ejercicio 3 en `practica.R`:
 
-**Resultados esperados.** En la consola se distingue qué objetivos se recalculan y
-cuáles se reutilizan de la caché (`skip`). El objetivo `meta_raw` —la lectura de los
-metadatos, la etapa más costosa— se reutiliza sin volver a ejecutarse. El resultado
-cambia: el control de calidad pasa a `PASAN QC: 6 / 6` y la tabla contiene seis
-filas, pues la grabación truncada ha dejado de descartarse.
+```r
+targets::tar_make()
+```
 
-**Discusión.** Se extraen dos conclusiones: `targets` recalcula únicamente las
-etapas posteriores a la modificación, lo que ahorra tiempo de cómputo en proyectos
-reales; y los umbrales del control de calidad determinan qué datos se incorporan al
-análisis.
+**Lo que verás.** En la consola, algunos targets aparecen como `skip` (se reutilizan de la caché) y otros se recalculan. El parseo de los metadatos —la etapa más costosa— no se vuelve a ejecutar. El resultado cambia:
 
-*Restauración.* Devuélvase `tol_frac = 0.05`, guárdese y ejecútese
-`targets::tar_make()`; el resultado debe volver a `PASAN QC: 5 / 6`.
+```
+PASAN QC:  6 / 6
+```
 
-## Ejercicio 4. Un join que infla filas silenciosamente
+La tabla tiene ahora **6 filas**: la grabación truncada ya no se descarta porque el umbral es ahora mucho más permisivo.
 
-La unión de la tabla de resultados con el diseño de muestreo es el punto donde
-con más frecuencia se introducen errores difíciles de detectar. Si la tabla de
-emplazamientos contiene dos filas para el mismo grabador —por ejemplo, por una
-doble clasificación de hábitat o una fila duplicada accidental—, cada grabación de
-ese grabador se multiplica en la tabla final sin ningún mensaje de error explícito
-de R. El flujo incluye un guardarraíl que detecta este caso concreto.
+Un umbral de 0.75 significa que se aceptan grabaciones con hasta el 75 % de duración anómala. ¿Tiene sentido para tu proyecto? Eso es una decisión ecológica, no técnica.
 
-**Procedimiento.**
+*Restauración:* vuelve a `tol_frac = 0.05`, guarda y ejecuta `tar_make()`. Vuelves a `PASAN QC: 5 / 6`.
 
-1. Ábrase el archivo `_targets.R` y localícese la línea:
+---
+
+## Ejercicio 4 — El join que infla filas
+
+Este es uno de los errores más frecuentes y difíciles de detectar cuando integras resultados con el diseño de muestreo: la tabla de emplazamientos tiene **dos filas para el mismo grabador** (por una doble clasificación de hábitat, una fila duplicada accidental, o datos de dos técnicos sin reconciliar), y cada grabación de ese grabador se multiplica en la tabla final **sin ningún mensaje de error de R**.
+
+El flujo incluye un guardarraíl que lo detecta. Aquí lo vas a provocar para ver cómo funciona.
+
+**Paso 1.** Abre (o vuelve a) `_targets.R` y localiza la línea:
 
 ```r
 tar_target(sites_file, "data/sites.csv", format = "file"),
 ```
 
-2. Sustitúyase `sites.csv` por `sites_duplicate.csv`:
+Cámbiala a:
 
 ```r
 tar_target(sites_file, "data/sites_duplicate.csv", format = "file"),
 ```
 
-3. Guárdese el archivo y ejecútese `targets::tar_make()`.
+**Paso 2.** Guarda y ejecuta el bloque del Ejercicio 4 en `practica.R`:
 
-**Resultados esperados.** En la consola aparecen dos avisos. El primero, de
-`dplyr`, indica que se ha detectado una relación muchos a muchos entre las tablas
-(`many-to-many relationship`). El segundo, del propio flujo, dice:
+```r
+targets::tar_make()
+```
+
+**Lo que verás.** Dos avisos en la consola:
 
 ```
+Detected an unexpected many-to-many relationship between `x` and `y`.
 El join cambió el nº de filas (5 -> 7). Revisa claves duplicadas en 'sites' o 'meta'.
 ```
 
-La tabla resultante tiene siete filas en lugar de cinco: las dos grabaciones del
-grabador AM02 aparecen duplicadas, cada una con un hábitat distinto (`matorral` y
-`pastizal`). El error es difícil de detectar a simple vista porque los índices
-acústicos y las fechas son correctos; solo el número de filas delata el problema.
+La tabla tiene **7 filas en lugar de 5**. Las grabaciones del grabador AM02 aparecen duplicadas: una fila con hábitat `matorral` y otra con `pastizal`. Los índices acústicos y las fechas son correctos en las dos filas; el error solo se ve en el número de filas.
 
-Para confirmar, examínese la tabla:
+Para encontrar qué fila está duplicada:
 
 ```r
-tabla <- read.csv("output/tabla_analisis.csv")
-View(tabla)
-nrow(tabla)   # debe devolver 7, no 5
+sites_dup <- read.csv("data/sites_duplicate.csv")
+sites_dup[duplicated(sites_dup$recorder_id), ]
 ```
 
-**Discusión.** Este tipo de error es habitual cuando el diseño de muestreo se
-construye a partir de varias fuentes o cuando dos personas rellenan la misma
-hoja por separado. La multiplicación de filas infla el tamaño aparente del
-conjunto de datos y, dependiendo del análisis posterior, puede sesgar los
-resultados sin producir ningún error explícito. El guardarraíl de `consolidate()`
-detiene el problema antes de que llegue al análisis; la solución es identificar
-y eliminar la fila duplicada en `data/sites_duplicate.csv`.
+Si el aviso no aparece, `targets` puede haber reutilizado `final_table` de la caché. Ejecuta esto y repite:
 
-*Restauración.* Devuélvase `"data/sites.csv"`, guárdese y ejecútese
-`targets::tar_make()`; la tabla debe volver a cinco filas.
+```r
+targets::tar_invalidate(final_table)
+targets::tar_make()
+```
 
-# Resolución de problemas frecuentes
+*Restauración:* vuelve a `"data/sites.csv"`, guarda y ejecuta `tar_make()`. La tabla vuelve a 5 filas.
 
-El Cuadro 2 recoge las incidencias más habituales y su solución.
+---
 
-**Cuadro 2.** Incidencias frecuentes y soluciones.
+# Solución de problemas
 
-| Síntoma | Causa probable | Solución |
+| Síntoma | Qué ha pasado | Qué hacer |
 |---|---|---|
-| `Error: there is no package called '…'` | Paquetes no instalados | Ejecutar la instrucción de instalación del apartado 3.4 |
-| `cannot open file '_targets.R'`; no se encuentran los archivos | Directorio de trabajo incorrecto | Verificar con `getwd()` y corregir con *Set Working Directory* |
-| El ejercicio 2 no produce avisos | El archivo no se guardó, o no se reejecutó el flujo | Guardar y ejecutar `targets::tar_invalidate(meta_raw); targets::tar_make()` |
-| Aviso `Instala 'sonicscrewdriver'…` | Paquete opcional ausente | Comportamiento normal; el flujo finaliza correctamente |
-| Fechas con valor `NA` | Zona horaria mal escrita | Emplear nombres válidos de la base IANA; consultar `OlsonNames()` |
-| La tabla tiene más filas de las esperadas | Clave duplicada en `sites.csv` | Identificar la fila duplicada con `sites[duplicated(sites$recorder_id), ]` y eliminarla |
-| Error de `callr` o «nombre de archivo demasiado largo» (Windows con OneDrive) | Ruta de usuario con caracteres especiales | Ejecutar `Sys.setenv(HOME = Sys.getenv("USERPROFILE"))` antes de `tar_make()` |
+| `Error: there is no package called '…'` | Falta instalar ese paquete | `install.packages("nombre")` en la Consola |
+| `cannot open file '_targets.R'` | El directorio de trabajo no es correcto | *Session → Set Working Directory → Choose Directory* y selecciona la carpeta del proyecto |
+| El Ejercicio 2 no produce avisos | No guardaste el archivo, o `targets` usó la caché | Guarda con Ctrl+S y ejecuta `targets::tar_invalidate(meta_raw); targets::tar_make()` |
+| El Ejercicio 4 no produce aviso del join | `final_table` en caché | `targets::tar_invalidate(final_table); targets::tar_make()` |
+| Aviso sobre `sonicscrewdriver` | Ese paquete está fuera de CRAN desde junio 2026 | Normal; el flujo funciona igualmente con la implementación local |
+| Fechas con valor `NA` | La zona horaria está mal escrita | Usa nombres IANA válidos; consulta `OlsonNames()` en R |
+| La tabla tiene más filas de las esperadas | Clave duplicada en la tabla de emplazamientos | `sites[duplicated(sites$recorder_id), ]` para localizar la fila |
+
+---
 
 # Recursos y para saber más
 
-Las siguientes herramientas de código abierto resuelven gran parte de este flujo y
-permiten ampliar la práctica:
+Todo el material, los enlaces y las lecturas recomendadas están en `docs/recursos.md` dentro del repositorio. Lo más relevante para continuar:
 
-- **warbleR**, **Rraven** y **ohun**: análisis de la estructura de señales acústicas
-  en R (tablas de selección, espectrogramas por lotes, medidas acústicas).
-- **NSNSDAcoustics**: ejecución del clasificador BirdNET desde R.
-- **sonicscrewdriver**: lectura de los metadatos internos de los grabadores AudioMoth.
-- **soundecology** (R) y **scikit-maad** (Python): cálculo de índices acústicos.
-- **targets** y **renv**: orquestación y fijación de versiones para la reproducibilidad.
+- **warbleR**, **Rraven**, **ohun** — análisis de estructura de señales en R (espectrogramas por lotes, medidas acústicas, integración con Raven).
+- **NSNSDAcoustics** — BirdNET desde R, con funciones de verificación de detecciones incluidas.
+- **scikit-maad** (Python) — más de 50 índices acústicos; accesible desde R con `reticulate`.
+- **soundecology** (R) — índices clásicos como ACI, ADI o NDSI; archivado en CRAN desde 2020, sigue funcionando.
+- **targets** y **renv** — orquestación y fijación de versiones para la reproducibilidad.
 
-# Idea principal
+---
 
-R no realiza la totalidad del análisis. La detección y clasificación de especies
-corresponde a modelos especializados, habitualmente implementados en Python. R
-destaca como capa de orquestación: gestión de metadatos, control de calidad,
-integración de resultados y reproducibilidad. El principal obstáculo en estos
-proyectos no reside en el análisis sofisticado, sino en las etapas previas —la
-nomenclatura, los metadatos y la organización de los datos—, que son precisamente
-el objeto de esta práctica.
+# La idea central
+
+R no hace todo el análisis. La detección y clasificación de especies la hacen modelos especializados, normalmente en Python. Lo que R hace especialmente bien es **coordinar**: gestionar metadatos, controlar la calidad de los datos, integrar resultados y garantizar que todo es reproducible. El principal obstáculo en estos proyectos no es el modelo sofisticado, sino lo que viene antes —los nombres de archivo, los metadatos, la organización de los datos—, que es exactamente lo que hemos trabajado hoy.
