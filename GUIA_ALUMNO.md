@@ -183,43 +183,7 @@ targets::tar_make()
 
 ---
 
-## Ejercicio 3 — Cambiar el umbral de control de calidad
-
-Este ejercicio muestra la capacidad más útil de `targets` en el día a día: si modificas algo, **solo recalcula lo que depende de ese algo**. El resto se reutiliza de la caché sin ejecutarse de nuevo.
-
-**Paso 1.** Abre `R/qc.R` desde el panel *Files* (carpeta `R/` → archivo `qc.R`). Localiza la función `qc_flag()`. La primera línea es:
-
-```r
-qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
-```
-
-El parámetro `tol_frac = 0.05` significa que se descartan las grabaciones con una duración que se desvíe más del 5 % de lo esperado. Cámbialo a 0.75:
-
-```r
-qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.75) {
-```
-
-**Paso 2.** Guarda el archivo (Ctrl+S) y ejecuta el bloque del Ejercicio 3 en `practica.R`:
-
-```r
-targets::tar_make()
-```
-
-**Lo que verás.** En la consola, algunos targets aparecen como `skip` (se reutilizan de la caché) y otros se recalculan. El parseo de los metadatos —la etapa más costosa— no se vuelve a ejecutar. El resultado cambia:
-
-```
-PASAN QC:  6 / 6
-```
-
-La tabla tiene ahora **6 filas**: la grabación truncada ya no se descarta porque el umbral es ahora mucho más permisivo.
-
-Un umbral de 0.75 significa que se aceptan grabaciones con hasta el 75 % de duración anómala. ¿Tiene sentido para tu proyecto? Eso es una decisión ecológica, no técnica.
-
-*Restauración:* vuelve a `tol_frac = 0.05`, guarda y ejecuta `tar_make()`. Vuelves a `PASAN QC: 5 / 6`.
-
----
-
-## Ejercicio 4 — El join que infla filas
+## Ejercicio 3 — El join que infla filas
 
 Este es uno de los errores más frecuentes y difíciles de detectar cuando integras resultados con el diseño de muestreo: la tabla de emplazamientos tiene **dos filas para el mismo grabador** (por una doble clasificación de hábitat, una fila duplicada accidental, o datos de dos técnicos sin reconciliar), y cada grabación de ese grabador se multiplica en la tabla final **sin ningún mensaje de error de R**.
 
@@ -237,7 +201,7 @@ Cámbiala a:
 tar_target(sites_file, "data/sites_duplicate.csv", format = "file"),
 ```
 
-**Paso 2.** Guarda y ejecuta el bloque del Ejercicio 4 en `practica.R`:
+**Paso 2.** Guarda y ejecuta el bloque del Ejercicio 3 en `practica.R`:
 
 ```r
 targets::tar_make()
@@ -270,6 +234,42 @@ targets::tar_make()
 
 ---
 
+## Ejercicio 4 — Cambiar el umbral de control de calidad
+
+Este ejercicio muestra la capacidad más útil de `targets` en el día a día: si modificas algo, **solo recalcula lo que depende de ese algo**. El resto se reutiliza de la caché sin ejecutarse de nuevo.
+
+**Paso 1.** Abre `R/qc.R` desde el panel *Files* (carpeta `R/` → archivo `qc.R`). Localiza la función `qc_flag()`. La primera línea es:
+
+```r
+qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
+```
+
+El parámetro `tol_frac = 0.05` significa que se descartan las grabaciones con una duración que se desvíe más del 5 % de lo esperado. Cámbialo a 0.75:
+
+```r
+qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.75) {
+```
+
+**Paso 2.** Guarda el archivo (Ctrl+S) y ejecuta el bloque del Ejercicio 4 en `practica.R`:
+
+```r
+targets::tar_make()
+```
+
+**Lo que verás.** En la consola, algunos targets aparecen como `skip` (se reutilizan de la caché) y otros se recalculan. El parseo de los metadatos —la etapa más costosa— no se vuelve a ejecutar. El resultado cambia:
+
+```
+PASAN QC:  6 / 6
+```
+
+La tabla tiene ahora **6 filas**: la grabación truncada ya no se descarta porque el umbral es ahora mucho más permisivo.
+
+Un umbral de 0.75 significa que se aceptan grabaciones con hasta el 75 % de duración anómala. ¿Tiene sentido para tu proyecto? Eso es una decisión ecológica, no técnica.
+
+*Restauración:* vuelve a `tol_frac = 0.05`, guarda y ejecuta `tar_make()`. Vuelves a `PASAN QC: 5 / 6`.
+
+---
+
 # Solución de problemas
 
 | Síntoma | Qué ha pasado | Qué hacer |
@@ -277,7 +277,7 @@ targets::tar_make()
 | `Error: there is no package called '…'` | Falta instalar ese paquete | `install.packages("nombre")` en la Consola |
 | `cannot open file '_targets.R'` | El directorio de trabajo no es correcto | *Session → Set Working Directory → Choose Directory* y selecciona la carpeta del proyecto |
 | El Ejercicio 2 no produce avisos | No guardaste el archivo, o `targets` usó la caché | Guarda con Ctrl+S y ejecuta `targets::tar_invalidate(meta_raw); targets::tar_make()` |
-| El Ejercicio 4 no produce aviso del join | `final_table` en caché | `targets::tar_invalidate(final_table); targets::tar_make()` |
+| El Ejercicio 3 no produce aviso del join | `final_table` en caché | `targets::tar_invalidate(final_table); targets::tar_make()` |
 | Aviso sobre `sonicscrewdriver` | Ese paquete está fuera de CRAN desde junio 2026 | Normal; el flujo funciona igualmente con la implementación local |
 | Fechas con valor `NA` | La zona horaria está mal escrita | Usa nombres IANA válidos; consulta `OlsonNames()` en R |
 | La tabla tiene más filas de las esperadas | Clave duplicada en la tabla de emplazamientos | `sites[duplicated(sites$recorder_id), ]` para localizar la fila |
