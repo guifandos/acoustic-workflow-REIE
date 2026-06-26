@@ -80,37 +80,6 @@ targets::tar_make()
 
 # ============================================================
 # EJERCICIO 3
-# Cambiar el umbral de QC → recálculo selectivo de targets
-# ============================================================
-
-# PASO 1 — Abre R/qc.R (panel Files → R → qc.R)
-#           Localiza la línea:
-#             qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
-#           Cámbiala a:
-#             qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.75) {
-#           Guarda el archivo (Ctrl+S).
-
-# PASO 2 — Vuelve aquí y ejecuta:
-targets::tar_make()
-
-# Observa en consola qué targets se recalculan (recalculated)
-# y cuáles se reutilizan de la caché (skip).
-
-# PASO 3 — ¿Cuántas filas tiene ahora la tabla?
-tabla2 <- read.csv("output/tabla_analisis.csv")
-nrow(tabla2)      # esperado: 6 (la grabación truncada ya no se descarta)
-
-# ── RESTAURACIÓN ────────────────────────────────────────────
-# En R/qc.R vuelve a:
-#   qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
-# Guarda y ejecuta:
-targets::tar_make()
-# El resultado debe volver a PASAN QC: 5 / 6.
-# ────────────────────────────────────────────────────────────
-
-
-# ============================================================
-# EJERCICIO 4
 # Un join que infla filas silenciosamente
 # ============================================================
 
@@ -129,10 +98,10 @@ targets::tar_make()
 #   El join cambió el nº de filas (5 -> 7). Revisa claves duplicadas ...
 
 # PASO 3 — ¿Cuántas filas tiene la tabla? ¿Qué grabador está duplicado?
-tabla3 <- read.csv("output/tabla_analisis.csv")
-nrow(tabla3)      # esperado: 7
+tabla2 <- read.csv("output/tabla_analisis.csv")
+nrow(tabla2)      # esperado: 7
 
-View(tabla3)      # busca las filas duplicadas de AM02
+View(tabla2)      # busca las filas duplicadas de AM02
 
 # PASO 4 — ¿Cuál es la fila duplicada en sites_duplicate.csv?
 sites_dup <- read.csv("data/sites_duplicate.csv")
@@ -145,4 +114,35 @@ sites_dup[duplicated(sites_dup$recorder_id), ]
 # Guarda y ejecuta:
 targets::tar_make()
 # La tabla debe volver a 5 filas.
+# ────────────────────────────────────────────────────────────
+
+
+# ============================================================
+# EJERCICIO 4
+# Cambiar el umbral de QC → recálculo selectivo de targets
+# ============================================================
+
+# PASO 1 — Abre R/qc.R (panel Files → R → qc.R)
+#           Localiza la línea:
+#             qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
+#           Cámbiala a:
+#             qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.75) {
+#           Guarda el archivo (Ctrl+S).
+
+# PASO 2 — Vuelve aquí y ejecuta:
+targets::tar_make()
+
+# Observa en consola qué targets se recalculan (recalculated)
+# y cuáles se reutilizan de la caché (skip).
+
+# PASO 3 — ¿Cuántas filas tiene ahora la tabla?
+tabla3 <- read.csv("output/tabla_analisis.csv")
+nrow(tabla3)      # esperado: 6 (la grabación truncada ya no se descarta)
+
+# ── RESTAURACIÓN ────────────────────────────────────────────
+# En R/qc.R vuelve a:
+#   qc_flag <- function(meta, expected_dur_s = NULL, tol_frac = 0.05) {
+# Guarda y ejecuta:
+targets::tar_make()
+# El resultado debe volver a PASAN QC: 5 / 6.
 # ────────────────────────────────────────────────────────────
