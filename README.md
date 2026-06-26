@@ -49,6 +49,7 @@ git clone https://github.com/guifandos/acoustic-workflow-REIE.git
 ```
 acoustic-workflow-REIE/
 ├── _targets.R         # el pipeline reproducible (orquesta todo)
+├── practica.R         # script de los ejercicios guiados
 ├── R/                 # funciones, una por etapa (parse, qc, indices, consolidate)
 ├── data_raw/          # grabaciones de ejemplo (RAW, no se tocan)
 ├── data/sites.csv     # diseño de muestreo (una fila por grabador)
