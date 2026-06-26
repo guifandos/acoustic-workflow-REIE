@@ -50,56 +50,199 @@ Hoy ordenamos ese caos en un flujo reproducible en R. **Las diapos son para llev
 
 ---
 
-## Seguiremos un archivo de principio a fin
+## La crisis de reproducibilidad
 
-<p class="kicker">El mapa · y el hilo de hoy</p>
+<p class="kicker">Por qué necesitamos flujos reproducibles</p>
 
-<div class="pipeline">
-  <span class="step">01 Campo</span><span class="step">02 Ingesta</span>
-  <span class="step">03 Metadatos·QC</span><span class="step">04 Procesado</span><span class="step">05 Tabla</span>
-</div>
-
-<hr class="rule">
-
-::: {.lead}
-<span class="hl">AM01/20260501_060000.WAV</span> — lo veremos transformarse
-en cada etapa hasta ser una fila lista para modelar.
-:::
+![](images/effect-size.png){fig-alt="Scatter plot: tamaño del efecto original (eje X) vs. en la replicación (eje Y). La mayoría de resultados significativos (rosa) no replican o se reducen; los verdes sí replican" fig-align="center" width="62%"}
 
 ::: {.muted .small}
-El mapa reaparece arriba en cada bloque: siempre sabrás dónde estás.
+Open Science Collaboration (2015, *Science*): solo el 36 % de 100 estudios replicaron. El problema no empieza en el modelo — empieza en el flujo de datos.
 :::
 
 ---
 
-## En vivo: un solo comando
+## «Sálvame de mí mismo»
 
-<p class="kicker">Payoff primero</p>
+<p class="kicker">El dolor real de los scripts sin pipeline</p>
 
-::: {.live}
-<span class="lbl">En vivo · demo 1</span>
+:::: {.columns}
+::: {.column width="50%"}
+![](images/tweet.png){fig-alt="Tweet de Brianna @RossKosophy: Save me from myself and having to remember all this when files change, con foto de notas de dependencias escritas a mano en un cuaderno" fig-align="center" width="90%"}
+:::
+::: {.column width="50%"}
+::: {.lead}
+¿Cuántas veces has perdido el hilo de <span class="hl">qué hay que volver a correr</span> cuando cambia un dato o un parámetro?
+:::
+::: {.muted .small .fragment}
+Con 6 archivos de demo ya ocurre. Con 3 temporadas de campo, te consume semanas.
+:::
+:::
+::::
+
+---
+
+## El análisis de datos como Sísifo
+
+<p class="kicker">Scripts secuenciales = subir la roca cada vez</p>
+
+:::: {.columns}
+::: {.column width="42%"}
+![](images/François_Tomb_Carlo_Ruspi_02.jpg){fig-alt="Pintura de Sísifo cargando eternamente una piedra enorme cuesta arriba, Tumba de Carlo Ruspi, François (1825)" fig-align="center" width="90%"}
+:::
+::: {.column width="58%"}
+::: {.incremental}
+- Cambias el **umbral de QC** → ¿qué scripts hay que volver a correr?
+- Llega un **becario nuevo** → ¿en qué orden se ejecuta todo?
+- **Revisión del paper** → ¿de dónde sale exactamente esa tabla?
+- **Tres temporadas de campo** → ¿qué versión del código la generó?
+:::
+::: {.muted .small .fragment}
+La solución no es recordar mejor. Es **no tener que recordar**.
+:::
+:::
+::::
+
+::: {.muted .small}
+*François, Tumba de Carlo Ruspi (1825) · dominio público*
 :::
 
-```bash
-git clone https://github.com/guifandos/acoustic-workflow-REIE.git
-```
-```r
-targets::tar_make()      # corre TODO el flujo
-```
+---
+
+## `targets` {.section-divider}
+
+<span class="section-num">BLOQUE 2 · LA SOLUCIÓN</span>
+
+---
+
+## Por qué importa la reproducibilidad
+
+:::: {.columns}
+::: {.column width="18%"}
+![](images/logo-targets.svg){fig-alt="Logo del paquete targets de R" fig-align="center" width="85%"}
+:::
+::: {.column width="82%"}
+![](images/reproducibility.svg){fig-alt="Tres entradas fijas (data_raw inmutable, código R/_targets.R, renv.lock con versiones) pasan por un solo comando tar_make() y producen siempre la misma tabla: el resultado no depende de quién la corre, ni cuándo, ni en qué portátil" fig-align="center" width="96%"}
+:::
+::::
+
+---
+
+## ¿Qué hace `targets`?
+
+<p class="kicker">Reproducibilidad</p>
+
+<hr class="rule">
+
+::: {.incremental}
+- **Recalcula solo lo que cambió** — editas el QC, reusa el parseo de caché.
+- **Garantiza el orden** — no consolida antes de parsear.
+- **Hace visible el flujo** — `tar_visnetwork()` lo dibuja.
+:::
 
 . . .
 
-…y aparece `output/tabla_analisis.csv`. **Lista para modelar.**
+::: {.panel}
+**Regla mental:** una función = un paso = un `tar_target()`. No reescribes: envuelves.
+:::
+
+---
+
+## De scripts a funciones
+
+<p class="kicker">targets · el primer paso</p>
+
+::: {.panel}
+**Regla de oro:** una función = un paso = un `tar_target()`. No reescribes el script: lo **envuelves**.
+:::
+
+<hr class="rule">
+
+:::: {.columns}
+::: {.column width="49%"}
+```r
+# ❌ Script monolítico (200 líneas)
+raw  <- read.csv("data_raw/AM01/...")
+meta <- parse_all(raw)
+meta$qc <- flag_qc(meta)
+idx  <- compute(meta)
+tab  <- join(idx, sites)
+write.csv(tab, "output/tabla.csv")
+```
+:::
+::: {.column width="49%"}
+```r
+# ✓ Una función, un fichero
+# R/parse_metadata.R
+parse_metadata <- function(files, tz) {
+  do.call(rbind,
+    lapply(files, parse_one, tz = tz))
+}
+```
+:::
+::::
+
+---
+
+## La anatomía de un `tar_target()`
+
+<p class="kicker">targets · bloques fundamentales</p>
+
+```r
+tar_target(
+  name    = meta_raw,              # ← el nodo en el grafo
+  command = parse_metadata(        # ← la función que lo produce
+              audio_files,         # ← otro target: crea una flecha
+              tz = recorder_tz     # ← parámetro escalar: no crea flecha
+            )
+)
+```
+
+::: {.incremental}
+- **`name`** → el objeto en caché; recupéralo con `tar_read(meta_raw)` o `tar_load(meta_raw)`
+- **`command`** → cualquier expresión R que devuelva algo serializable
+- Los argumentos que son **otros targets** definen las flechas del DAG automáticamente
+:::
+
+---
+
+## Un DAG mínimo
+
+<p class="kicker">targets · el ejemplo didáctico</p>
+
+![](images/airquality-pipeline.png){fig-alt="Grafo de dependencias del ejemplo airquality: raw_data_file apunta a raw_data que apunta a data; data se bifurca en fit y en hist" fig-align="center" width="65%"}
+
+```r
+list(
+  tar_target(raw_data_file, "data/airquality.csv", format = "file"),
+  tar_target(raw_data,  read.csv(raw_data_file)),
+  tar_target(data,      dplyr::filter(raw_data, !is.na(Ozone))),
+  tar_target(hist,      hist(data$Ozone)),
+  tar_target(fit,       lm(Ozone ~ Wind + Temp, data = data))
+)
+```
 
 ::: {.muted .small}
-¿Cómo lo hace ese comando? Al final. Primero, de dónde sale el dato.
+`targets` lee el código estáticamente e infiere el grafo. Sin declaración manual de dependencias.
+:::
+
+---
+
+## El ciclo de trabajo con targets
+
+<p class="kicker">targets · flujo iterativo</p>
+
+![](images/workflow.png){fig-alt="Ciclo continuo de seis pasos: escribir función en R/, añadir tar_target en _targets.R, visualizar con tar_visnetwork(), ejecutar con tar_make(), comprobar resultados, volver a escribir función" fig-align="center" width="92%"}
+
+::: {.muted .small}
+Fuente: rdatatoolbox.github.io/course-targets (CC-BY 4.0)
 :::
 
 ---
 
 ## El dato nace<br>en el campo {.section-divider}
 
-<span class="section-num">ACTO 1 · UN GUIÑO AL CAMPO</span>
+<span class="section-num">BLOQUE 3 · EL CASO EN BIOACÚSTICA</span>
 
 ::: notes
 Encuadre: la charla va de la SD en adelante, pero en 1 diapo recordamos que la calidad se decide antes.
@@ -164,6 +307,66 @@ BirdNET · Perch · scikit-maad
 
 ::: {.muted .small}
 R coordina y construye la tabla. Sin peleas R-vs-Python.
+:::
+
+---
+
+## Seguiremos un archivo de principio a fin
+
+<p class="kicker">El mapa · y el hilo de hoy</p>
+
+<div class="pipeline">
+  <span class="step">01 Campo</span><span class="step">02 Ingesta</span>
+  <span class="step">03 Metadatos·QC</span><span class="step">04 Procesado</span><span class="step">05 Tabla</span>
+</div>
+
+<hr class="rule">
+
+::: {.lead}
+<span class="hl">AM01/20260501_060000.WAV</span> — lo veremos transformarse
+en cada etapa hasta ser una fila lista para modelar.
+:::
+
+::: {.muted .small}
+El mapa reaparece arriba en cada bloque: siempre sabrás dónde estás.
+:::
+
+---
+
+## En vivo: un solo comando
+
+<p class="kicker">targets en acción · el proyecto real</p>
+
+::: {.live}
+<span class="lbl">En vivo · demo 1</span>
+:::
+
+```bash
+git clone https://github.com/guifandos/acoustic-workflow-REIE.git
+```
+```r
+targets::tar_make()      # corre TODO el flujo
+```
+
+. . .
+
+…y aparece `output/tabla_analisis.csv`. **Lista para modelar.**
+
+::: {.muted .small}
+Ya sabemos qué hace targets. Ahora vemos qué hay dentro de cada paso.
+:::
+
+---
+
+## El grafo del pipeline
+
+<p class="kicker">Este proyecto · 11 objetivos</p>
+
+![](images/pipeline_dag.svg){fig-alt="Grafo de dependencias del pipeline: audio_files → meta_raw → meta_qc → good_files → indices → final_table → final_csv; meta_qc también alimenta qc_report y gaps; sites_file → sites se une en final_table" fig-align="center" width="90%"}
+
+::: {.muted .small}
+Cada flecha es una dependencia que `targets` conoce y respeta.
+Genera el tuyo con `tar_visnetwork()` (interactivo) o `tar_mermaid()`.
 :::
 
 ---
@@ -355,205 +558,9 @@ assert_unique_key(sites, "recorder_id")   # falla ANTES de inflar
 
 ---
 
-## La crisis de reproducibilidad
-
-<p class="kicker">Por qué necesitamos flujos reproducibles</p>
-
-![](images/effect-size.png){fig-alt="Scatter plot: tamaño del efecto original (eje X) vs. en la replicación (eje Y). La mayoría de resultados significativos (rosa) no replican o se reducen; los verdes sí replican" fig-align="center" width="62%"}
-
-::: {.muted .small}
-Open Science Collaboration (2015, *Science*): solo el 36 % de 100 estudios replicaron. El problema no empieza en el modelo — empieza en el flujo de datos.
-:::
-
----
-
-## «Sálvame de mí mismo»
-
-<p class="kicker">El dolor real de los scripts sin pipeline</p>
-
-:::: {.columns}
-::: {.column width="50%"}
-![](images/tweet.png){fig-alt="Tweet de Brianna @RossKosophy: Save me from myself and having to remember all this when files change, con foto de notas de dependencias escritas a mano en un cuaderno" fig-align="center" width="90%"}
-:::
-::: {.column width="50%"}
-::: {.lead}
-¿Cuántas veces has perdido el hilo de <span class="hl">qué hay que volver a correr</span> cuando cambia un dato o un parámetro?
-:::
-::: {.muted .small .fragment}
-Con 6 archivos de demo ya ocurre. Con 3 temporadas de campo, te consume semanas.
-:::
-:::
-::::
-
----
-
-## El análisis de datos como Sísifo
-
-<p class="kicker">Scripts secuenciales = subir la roca cada vez</p>
-
-:::: {.columns}
-::: {.column width="42%"}
-![](images/Sisyphe_lol_cut.jpg){fig-alt="Sísifo cargando eternamente una piedra enorme cuesta arriba, condenado a repetirlo sin fin" fig-align="center" width="90%"}
-:::
-::: {.column width="58%"}
-::: {.incremental}
-- Cambias el **umbral de QC** → ¿qué scripts hay que volver a correr?
-- Llega un **becario nuevo** → ¿en qué orden se ejecuta todo?
-- **Revisión del paper** → ¿de dónde sale exactamente esa tabla?
-- **Tres temporadas de campo** → ¿qué versión del código la generó?
-:::
-::: {.muted .small .fragment}
-La solución no es recordar mejor. Es **no tener que recordar**.
-:::
-:::
-::::
-
-::: {.muted .small}
-*François, Tumba de Carlo Ruspi (1825)*
-:::
-
----
-
-## `targets` {.section-divider}
-
-<span class="section-num">ACTO 3 · EL PEGAMENTO</span>
-
----
-
-## Por qué importa la reproducibilidad
-
-![](images/reproducibility.svg){fig-alt="Tres entradas fijas (data_raw inmutable, código R/_targets.R, renv.lock con versiones) pasan por un solo comando tar_make() y producen siempre la misma tabla: el resultado no depende de quién la corre, ni cuándo, ni en qué portátil" fig-align="center" width="82%"}
-
----
-
-## ¿Qué hace `targets`?
-
-<p class="kicker">Reproducibilidad</p>
-
-<hr class="rule">
-
-::: {.incremental}
-- **Recalcula solo lo que cambió** — editas el QC, reusa el parseo de caché.
-- **Garantiza el orden** — no consolida antes de parsear.
-- **Hace visible el flujo** — `tar_visnetwork()` lo dibuja.
-:::
-
-. . .
-
-::: {.panel}
-**Regla mental:** una función = un paso = un `tar_target()`. No reescribes: envuelves.
-:::
-
----
-
-## De scripts a funciones
-
-<p class="kicker">targets · el primer paso</p>
-
-::: {.panel}
-**Regla de oro:** una función = un paso = un `tar_target()`. No reescribes el script: lo **envuelves**.
-:::
-
-<hr class="rule">
-
-:::: {.columns}
-::: {.column width="49%"}
-```r
-# ❌ Script monolítico (200 líneas)
-raw  <- read.csv("data_raw/AM01/...")
-meta <- parse_all(raw)
-meta$qc <- flag_qc(meta)
-idx  <- compute(meta)
-tab  <- join(idx, sites)
-write.csv(tab, "output/tabla.csv")
-```
-:::
-::: {.column width="49%"}
-```r
-# ✓ Una función, un fichero
-# R/parse_metadata.R
-parse_metadata <- function(files, tz) {
-  do.call(rbind,
-    lapply(files, parse_one, tz = tz))
-}
-```
-:::
-::::
-
----
-
-## La anatomía de un `tar_target()`
-
-<p class="kicker">targets · bloques fundamentales</p>
-
-```r
-tar_target(
-  name    = meta_raw,              # ← el nodo en el grafo
-  command = parse_metadata(        # ← la función que lo produce
-              audio_files,         # ← otro target: crea una flecha
-              tz = recorder_tz     # ← parámetro escalar: no crea flecha
-            )
-)
-```
-
-::: {.incremental}
-- **`name`** → el objeto en caché; recupéralo con `tar_read(meta_raw)` o `tar_load(meta_raw)`
-- **`command`** → cualquier expresión R que devuelva algo serializable
-- Los argumentos que son **otros targets** definen las flechas del DAG automáticamente
-:::
-
----
-
-## Un DAG mínimo
-
-<p class="kicker">targets · el ejemplo didáctico</p>
-
-![](images/airquality-pipeline.png){fig-alt="Grafo de dependencias del ejemplo airquality: raw_data_file apunta a raw_data que apunta a data; data se bifurca en fit y en hist" fig-align="center" width="65%"}
-
-```r
-list(
-  tar_target(raw_data_file, "data/airquality.csv", format = "file"),
-  tar_target(raw_data,  read.csv(raw_data_file)),
-  tar_target(data,      dplyr::filter(raw_data, !is.na(Ozone))),
-  tar_target(hist,      hist(data$Ozone)),
-  tar_target(fit,       lm(Ozone ~ Wind + Temp, data = data))
-)
-```
-
-::: {.muted .small}
-`targets` lee el código estáticamente e infiere el grafo. Sin declaración manual de dependencias.
-:::
-
----
-
-## El grafo del pipeline
-
-<p class="kicker">Reproducibilidad</p>
-
-![](images/pipeline_dag.svg){fig-alt="Grafo de dependencias del pipeline: audio_files → meta_raw → meta_qc → good_files → indices → final_table → final_csv; meta_qc también alimenta qc_report y gaps; sites_file → sites se une en final_table" fig-align="center" width="90%"}
-
-::: {.muted .small}
-11 objetivos; cada flecha es una dependencia que `targets` conoce y respeta.
-Genera el tuyo con `tar_visnetwork()` (interactivo) o `tar_mermaid()`.
-:::
-
----
-
-## El ciclo de trabajo con targets
-
-<p class="kicker">targets · flujo iterativo</p>
-
-![](images/workflow.png){fig-alt="Ciclo continuo de seis pasos: escribir función en R/, añadir tar_target en _targets.R, visualizar con tar_visnetwork(), ejecutar con tar_make(), comprobar resultados, volver a escribir función" fig-align="center" width="92%"}
-
-::: {.muted .small}
-Fuente: rdatatoolbox.github.io/course-targets (CC-BY 4.0)
-:::
-
----
-
 ## En vivo: la magia de la caché
 
-<p class="kicker">Reproducibilidad</p>
+<p class="kicker">targets · recálculo selectivo</p>
 
 ::: {.live}
 <span class="lbl">En vivo · demo 3</span>
@@ -572,25 +579,9 @@ En tres temporadas de campo, esto es la diferencia entre 30 s y 3 h.
 
 ---
 
-## warbleR: de la tabla al análisis de señal
-
-<p class="kicker">Y ahora qué</p>
-
-::: {.lead}
-Tu tabla y los archivos que pasan QC son <span class="hl">la entrada de warbleR</span>.
-:::
-
-![](images/warbler_flow.svg){fig-alt="Workflow de warbleR: tabla y WAV que pasan QC entran en warbleR y producen tablas de selección, espectrogramas por lotes y medidas acústicas; Rraven conecta con Raven" fig-align="center" width="86%"}
-
-::: {.muted .small}
-Flujo estandarizado de análisis de estructura de señal (Araya-Salas & Smith-Vidaurre, *MEE* 2017).
-:::
-
----
-
 ## Construye tu pipeline {.section-divider}
 
-<span class="section-num">ACTO 4 · INTEGRACIÓN</span>
+<span class="section-num">BLOQUE 4 · INTEGRACIÓN</span>
 
 ---
 
@@ -690,6 +681,22 @@ Todos los motores (BirdNET, scikit-maad, warbleR) se conectan al mismo orquestad
 
 ---
 
+## warbleR: de la tabla al análisis de señal
+
+<p class="kicker">Y ahora qué</p>
+
+::: {.lead}
+Tu tabla y los archivos que pasan QC son <span class="hl">la entrada de warbleR</span>.
+:::
+
+![](images/warbler_flow.svg){fig-alt="Workflow de warbleR: tabla y WAV que pasan QC entran en warbleR y producen tablas de selección, espectrogramas por lotes y medidas acústicas; Rraven conecta con Raven" fig-align="center" width="86%"}
+
+::: {.muted .small}
+Flujo estandarizado de análisis de estructura de señal (Araya-Salas & Smith-Vidaurre, *MEE* 2017).
+:::
+
+---
+
 ## Chuletas e integración {.section-divider}
 
 <span class="section-num">PARA LLEVAR</span>
@@ -698,21 +705,21 @@ Todos los motores (BirdNET, scikit-maad, warbleR) se conectan al mismo orquestad
 
 ## El flujo entero en una pantalla {.takeaway}
 
-::: {.cheat}
-<span class="st">01 Campo</span><span class="do">protocolo + hoja de despliegue (coordenadas, SD, foto, deriva de reloj)</span>
+<div class="cheat">
+<span class="st">01 Campo</span><span class="do">protocolo · hoja de despliegue · deriva de reloj</span>
 <span class="row-line"></span>
 <span class="st">02 Ingesta</span><span class="do"><code>data_raw/</code> intocable · una carpeta por grabador</span>
 <span class="row-line"></span>
-<span class="st">03 Metadatos</span><span class="do"><code>parse_metadata()</code> · valida nombre vs cabecera</span>
+<span class="st">03 Metadatos</span><span class="do"><code>parse_metadata()</code> · valida nombre del archivo vs cabecera WAV</span>
 <span class="row-line"></span>
-<span class="st">03 QC</span><span class="do"><code>qc_flag()</code> · <code>qc_schedule_gaps()</code></span>
+<span class="st">04 QC</span><span class="do"><code>qc_flag()</code> · <code>qc_schedule_gaps()</code></span>
 <span class="row-line"></span>
-<span class="st">04 Procesado</span><span class="do"><code>compute_indices()</code> · <code>NSNSDAcoustics::birdnet_analyzer()</code></span>
+<span class="st">05 Procesado</span><span class="do"><code>compute_indices()</code> · <code>run_birdnet()</code> vía Python</span>
 <span class="row-line"></span>
-<span class="st">05 Tabla</span><span class="do"><code>consolidate()</code> + <code>assert_unique_key()</code></span>
+<span class="st">06 Tabla</span><span class="do"><code>consolidate()</code> + <code>assert_unique_key()</code></span>
 <span class="row-line"></span>
-<span class="st">Pegamento</span><span class="do"><code>targets::tar_make()</code> · <code>renv</code></span>
-:::
+<span class="st">Pegamento</span><span class="do"><code>targets::tar_make()</code> · <code>renv::snapshot()</code></span>
+</div>
 
 ---
 
