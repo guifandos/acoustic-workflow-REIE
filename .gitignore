@@ -38,9 +38,10 @@ dashboard/
 Thumbs.db
 .DS_Store
 
-# --- Fuentes de la presentación (no se distribuyen; solo se publica el HTML) ---
+# --- Presentación: fuentes y HTML generado (no se distribuyen en el repo) ---
 slides/images/
 slides/slides.qmd
+slides/slides.html
 
 # --- Artefactos generados (no versionar) ---
 entrega_alumnos_acustica.zip

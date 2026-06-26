@@ -54,7 +54,7 @@ acoustic-workflow-REIE/
 ├── data_raw/          # grabaciones de ejemplo (RAW, no se tocan)
 ├── data/sites.csv     # diseño de muestreo (una fila por grabador)
 ├── output/            # aquí aparece la tabla generada
-├── slides/slides.html # la presentación (se abre en el navegador, sin conexión)
+├── slides/            # presentación (compartida por separado)
 ├── docs/recursos.md   # herramientas abiertas (warbleR, BirdNET, soundecology…)
 └── GUIA_ALUMNO.*      # guía de la práctica
 ```
