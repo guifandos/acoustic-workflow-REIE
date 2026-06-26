@@ -38,6 +38,10 @@ dashboard/
 Thumbs.db
 .DS_Store
 
+# --- Fuentes de la presentación (no se distribuyen; solo se publica el HTML) ---
+slides/images/
+slides/slides.qmd
+
 # --- Artefactos generados (no versionar) ---
 entrega_alumnos_acustica.zip
 _quarto_internal_scss_error.scss

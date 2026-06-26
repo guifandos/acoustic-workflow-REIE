@@ -7,6 +7,18 @@
 # ============================================================
 
 
+# ── REINICIAR EL PIPELINE DESDE CERO ────────────────────────────────────────
+# Si necesitas recalcular todo desde el principio (por ejemplo, para
+# demostrar el flujo completo sin caché), ejecuta esto UNA SOLA VEZ
+# y luego vuelve a lanzar tar_make():
+#
+#   targets::tar_destroy()   # borra _targets/ y fuerza recálculo total
+#
+# Si solo quieres invalidar un target concreto (y sus dependientes):
+#   targets::tar_invalidate(meta_raw)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 # ============================================================
 # EJERCICIO 1
 # Ejecutar el flujo completo y examinar la tabla resultante
@@ -49,8 +61,12 @@ targets::tar_make()
 #   DISCREPANCIA nombre vs cabecera en 20260501_060000.WAV ...
 #   Discrepancia nombre/hdr: 6
 
-# PASO 3 — Mira las columnas dt_name y dt_header de la tabla:
+# PASO 3 — Lee el resultado del QC directamente desde la caché de targets
+#           (no hace falta leer ningún CSV; targets lo tiene guardado):
 meta <- targets::tar_read(meta_qc)
+#   dt_name   → fecha/hora sacada del NOMBRE del archivo
+#   dt_header → fecha/hora sacada de la CABECERA interna del WAV
+#   name_vs_header_mismatch → TRUE si las dos no coinciden
 meta[, c("filename", "dt_name", "dt_header", "name_vs_header_mismatch")]
 
 # ── RESTAURACIÓN ────────────────────────────────────────────
