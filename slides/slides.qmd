@@ -355,6 +355,65 @@ assert_unique_key(sites, "recorder_id")   # falla ANTES de inflar
 
 ---
 
+## La crisis de reproducibilidad
+
+<p class="kicker">Por qué necesitamos flujos reproducibles</p>
+
+![](images/effect-size.png){fig-alt="Scatter plot: tamaño del efecto original (eje X) vs. en la replicación (eje Y). La mayoría de resultados significativos (rosa) no replican o se reducen; los verdes sí replican" fig-align="center" width="62%"}
+
+::: {.muted .small}
+Open Science Collaboration (2015, *Science*): solo el 36 % de 100 estudios replicaron. El problema no empieza en el modelo — empieza en el flujo de datos.
+:::
+
+---
+
+## «Sálvame de mí mismo»
+
+<p class="kicker">El dolor real de los scripts sin pipeline</p>
+
+:::: {.columns}
+::: {.column width="50%"}
+![](images/tweet.png){fig-alt="Tweet de Brianna @RossKosophy: Save me from myself and having to remember all this when files change, con foto de notas de dependencias escritas a mano en un cuaderno" fig-align="center" width="90%"}
+:::
+::: {.column width="50%"}
+::: {.lead}
+¿Cuántas veces has perdido el hilo de <span class="hl">qué hay que volver a correr</span> cuando cambia un dato o un parámetro?
+:::
+::: {.muted .small .fragment}
+Con 6 archivos de demo ya ocurre. Con 3 temporadas de campo, te consume semanas.
+:::
+:::
+::::
+
+---
+
+## El análisis de datos como Sísifo
+
+<p class="kicker">Scripts secuenciales = subir la roca cada vez</p>
+
+:::: {.columns}
+::: {.column width="42%"}
+![](images/Sisyphe_lol_cut.jpg){fig-alt="Sísifo cargando eternamente una piedra enorme cuesta arriba, condenado a repetirlo sin fin" fig-align="center" width="90%"}
+:::
+::: {.column width="58%"}
+::: {.incremental}
+- Cambias el **umbral de QC** → ¿qué scripts hay que volver a correr?
+- Llega un **becario nuevo** → ¿en qué orden se ejecuta todo?
+- **Revisión del paper** → ¿de dónde sale exactamente esa tabla?
+- **Tres temporadas de campo** → ¿qué versión del código la generó?
+:::
+::: {.muted .small .fragment}
+La solución no es recordar mejor. Es **no tener que recordar**.
+:::
+:::
+::::
+
+::: {.muted .small}
+*François, Tumba de Carlo Ruspi (1825)*
+:::
+
+---
+
 ## `targets` {.section-divider}
 
 <span class="section-num">ACTO 3 · EL PEGAMENTO</span>
@@ -387,6 +446,86 @@ assert_unique_key(sites, "recorder_id")   # falla ANTES de inflar
 
 ---
 
+## De scripts a funciones
+
+<p class="kicker">targets · el primer paso</p>
+
+::: {.panel}
+**Regla de oro:** una función = un paso = un `tar_target()`. No reescribes el script: lo **envuelves**.
+:::
+
+<hr class="rule">
+
+:::: {.columns}
+::: {.column width="49%"}
+```r
+# ❌ Script monolítico (200 líneas)
+raw  <- read.csv("data_raw/AM01/...")
+meta <- parse_all(raw)
+meta$qc <- flag_qc(meta)
+idx  <- compute(meta)
+tab  <- join(idx, sites)
+write.csv(tab, "output/tabla.csv")
+```
+:::
+::: {.column width="49%"}
+```r
+# ✓ Una función, un fichero
+# R/parse_metadata.R
+parse_metadata <- function(files, tz) {
+  do.call(rbind,
+    lapply(files, parse_one, tz = tz))
+}
+```
+:::
+::::
+
+---
+
+## La anatomía de un `tar_target()`
+
+<p class="kicker">targets · bloques fundamentales</p>
+
+```r
+tar_target(
+  name    = meta_raw,              # ← el nodo en el grafo
+  command = parse_metadata(        # ← la función que lo produce
+              audio_files,         # ← otro target: crea una flecha
+              tz = recorder_tz     # ← parámetro escalar: no crea flecha
+            )
+)
+```
+
+::: {.incremental}
+- **`name`** → el objeto en caché; recupéralo con `tar_read(meta_raw)` o `tar_load(meta_raw)`
+- **`command`** → cualquier expresión R que devuelva algo serializable
+- Los argumentos que son **otros targets** definen las flechas del DAG automáticamente
+:::
+
+---
+
+## Un DAG mínimo
+
+<p class="kicker">targets · el ejemplo didáctico</p>
+
+![](images/airquality-pipeline.png){fig-alt="Grafo de dependencias del ejemplo airquality: raw_data_file apunta a raw_data que apunta a data; data se bifurca en fit y en hist" fig-align="center" width="65%"}
+
+```r
+list(
+  tar_target(raw_data_file, "data/airquality.csv", format = "file"),
+  tar_target(raw_data,  read.csv(raw_data_file)),
+  tar_target(data,      dplyr::filter(raw_data, !is.na(Ozone))),
+  tar_target(hist,      hist(data$Ozone)),
+  tar_target(fit,       lm(Ozone ~ Wind + Temp, data = data))
+)
+```
+
+::: {.muted .small}
+`targets` lee el código estáticamente e infiere el grafo. Sin declaración manual de dependencias.
+:::
+
+---
+
 ## El grafo del pipeline
 
 <p class="kicker">Reproducibilidad</p>
@@ -396,6 +535,18 @@ assert_unique_key(sites, "recorder_id")   # falla ANTES de inflar
 ::: {.muted .small}
 11 objetivos; cada flecha es una dependencia que `targets` conoce y respeta.
 Genera el tuyo con `tar_visnetwork()` (interactivo) o `tar_mermaid()`.
+:::
+
+---
+
+## El ciclo de trabajo con targets
+
+<p class="kicker">targets · flujo iterativo</p>
+
+![](images/workflow.png){fig-alt="Ciclo continuo de seis pasos: escribir función en R/, añadir tar_target en _targets.R, visualizar con tar_visnetwork(), ejecutar con tar_make(), comprobar resultados, volver a escribir función" fig-align="center" width="92%"}
+
+::: {.muted .small}
+Fuente: rdatatoolbox.github.io/course-targets (CC-BY 4.0)
 :::
 
 ---
@@ -433,6 +584,108 @@ Tu tabla y los archivos que pasan QC son <span class="hl">la entrada de warbleR<
 
 ::: {.muted .small}
 Flujo estandarizado de análisis de estructura de señal (Araya-Salas & Smith-Vidaurre, *MEE* 2017).
+:::
+
+---
+
+## Construye tu pipeline {.section-divider}
+
+<span class="section-num">ACTO 4 · INTEGRACIÓN</span>
+
+---
+
+## El ecosistema PAM: fragmentado por diseño
+
+<p class="kicker">Integración</p>
+
+<hr class="rule">
+
+::: {.lead}
+Ninguna herramienta cubre las <span class="hl">7 etapas</span> del flujo completo.<br>
+La pregunta no es «¿qué herramienta uso?» sino «<span class="hl">¿qué arquitectura las une?</span>»
+:::
+
+. . .
+
+::: {.small}
+| Herramienta | Fortaleza | Estado |
+|---|---|---|
+| BirdNET-Analyzer | detección de especies (>9000 spp) | activo · MIT |
+| scikit-maad | >50 índices acústicos | activo · BSD-3 |
+| warbleR | estructura de señal, selección manual | activo · GPL-2 |
+| NSNSDAcoustics | wrapper BirdNET + tabla R | activo · MIT |
+| soundecology | índices clásicos (ACI, ADI…) | archivado 2020 |
+| **acoustic-workflow-REIE** | **QC · orquestación · tabla** | **este repo** |
+:::
+
+---
+
+## Conectar BirdNET al pipeline
+
+<p class="kicker">Integración · detección de especies</p>
+
+El stub ya está en `R/indices.R`. Solo hay que descomentar dos líneas en `_targets.R`:
+
+```r
+# En _targets.R — ya escrito, descomentar:
+tar_target(birdnet_csv,
+           run_birdnet(audio_dir, out_dir = "output/birdnet")),
+tar_target(detections,
+           read_birdnet_out(birdnet_csv)),
+```
+
+```r
+# R/indices.R — run_birdnet() llama al CLI de BirdNET via system2()
+args <- c("-m", "birdnet_analyzer.analyze",
+          "--i", audio_dir, "--o", out_dir,
+          "--min_conf", "0.25", "--rtype", "csv")
+system2("python", args)
+```
+
+::: {.muted .small}
+`targets` rastrea `birdnet_csv` como fichero (`format = "file"`): si BirdNET produce nuevos CSV, solo recalcula `detections` y `final_table`, no las 10 h de audio.
+:::
+
+---
+
+## Más índices: scikit-maad desde R
+
+<p class="kicker">Integración · índices acústicos</p>
+
+`scikit-maad` tiene >50 índices y false-color spectrograms. Acceso desde R con `reticulate`:
+
+```r
+# R/indices_maad.R
+compute_indices_maad <- function(files) {
+  maad <- reticulate::import("maad")
+  rows <- lapply(files, function(f) {
+    s   <- maad$sound$load(f)
+    idx <- maad$features$all_spectral_alpha_indices(s[[1]], s[[2]])
+    cbind(file = f, as.data.frame(idx))
+  })
+  do.call(rbind, rows)
+}
+```
+
+```r
+# En _targets.R — sustituir compute_indices_basic():
+tar_target(indices, compute_indices_maad(good_files))
+```
+
+::: {.muted .small}
+`reticulate` gestiona el entorno Python. Una vez instalado (`pip install scikit-maad`), el resto es R puro.
+:::
+
+---
+
+## El pipeline que puedes tener
+
+<p class="kicker">Integración · visión completa</p>
+
+![](images/integracion.svg){fig-alt="WAV pasan QC en R/targets; los archivos OK entran en scikit-maad para índices y en BirdNET para detecciones; ambas salidas se unen en la tabla R; warbleR toma tabla + WAV para análisis de señal; echo-dash visualiza" fig-align="center" width="96%"}
+
+::: {.muted .small}
+Todos los motores (BirdNET, scikit-maad, warbleR) se conectan al mismo orquestador de `targets`. Cambias uno sin tocar los demás.
 :::
 
 ---
@@ -510,8 +763,14 @@ Pérez-Granados (2023, *Ibis*): aplicaciones y *pitfalls* · Thompson et al. (20
 **Análisis de señal en R**
 Araya-Salas & Smith-Vidaurre (2017, *Methods Ecol. Evol.*): warbleR — `doi:10.1111/2041-210X.12624` · Sueur, Aubin & Simonis (2008, *Bioacoustics*): seewave — `doi:10.1080/09524622.2008.9753600`
 
+**Crisis de reproducibilidad**
+Open Science Collaboration (2015, *Science*): Estimating the reproducibility of psychological science — `doi:10.1126/science.aac4716`
+
 **Reproducibilidad y herramientas**
-Landau (2021, *JOSS*): targets — `doi:10.21105/joss.02959` · `sonicscrewdriver` · `soundecology` · `scikit-maad` (enlaces en `docs/recursos.md`)
+Landau (2021, *JOSS*): targets — `doi:10.21105/joss.02959` · Curso rdatatoolbox.github.io/course-targets (CC-BY 4.0) · `scikit-maad` (Ulloa et al. 2021, *Methods Ecol. Evol.*) · `soundecology` · `NSNSDAcoustics` (enlaces en `docs/recursos.md`)
+
+**Imágenes**
+Sísifo: François, *Tomb of Carlo Ruspi* (1825), dominio público · tweet: @BrianaRossiology · effect-size: Open Science Collaboration 2015 · workflow cycle: rdatatoolbox CC-BY 4.0
 :::
 
 ---
