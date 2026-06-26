@@ -42,7 +42,7 @@ git clone https://github.com/guifandos/acoustic-workflow-REIE.git
    Aparecerá `output/tabla_analisis.csv`: la tabla lista para modelar.
 
 > **Guía completa paso a paso** (desde cero, pensada para principiantes en R, con la
-> instalación y los ejercicios): **`GUIA_ALUMNO.docx`** (o `GUIA_ALUMNO.md`).
+> instalación y los ejercicios): **`GUIA_ALUMNO.pdf`**.
 
 ## 3. Estructura del repositorio
 
@@ -56,7 +56,7 @@ acoustic-workflow-REIE/
 ├── output/            # aquí aparece la tabla generada
 ├── slides/            # presentación (compartida por separado)
 ├── docs/recursos.md   # herramientas abiertas (warbleR, BirdNET, soundecology…)
-└── GUIA_ALUMNO.*      # guía de la práctica
+└── GUIA_ALUMNO.pdf    # guía de la práctica
 ```
 
 `targets` recalcula solo lo que cambia y `data_raw/` es de solo lectura: eso es lo

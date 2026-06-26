@@ -26,7 +26,11 @@ GUIA_PONENTE.md
 docs/guion.md
 docs/presentacion-integracion.md
 
-# --- Otros documentos: solo se publica la guía del alumno ---
+# --- Guía del alumno: solo se publica el PDF ---
+GUIA_ALUMNO.md
+GUIA_ALUMNO.docx
+
+# --- Otros documentos internos ---
 CHULETA_ALUMNO.md
 CHULETA_ALUMNO.docx
 
@@ -38,10 +42,8 @@ dashboard/
 Thumbs.db
 .DS_Store
 
-# --- Presentación: fuentes y HTML generado (no se distribuyen en el repo) ---
-slides/images/
-slides/slides.qmd
-slides/slides.html
+# --- Presentación completa: no se distribuye en el repo ---
+slides/
 
 # --- Artefactos generados (no versionar) ---
 entrega_alumnos_acustica.zip
